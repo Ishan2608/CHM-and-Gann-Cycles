@@ -5,5 +5,10 @@
 /data_files/gt_10_yrs_data.csv
 /data_files/all_20_yrs_data.csv
 
+/temp/
+
+last_completed_stock.txt
+error_flag.txt
+
 "Kaggle_Thumbnail.png"
 "Problem Description.txt"
