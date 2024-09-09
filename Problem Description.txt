@@ -1,0 +1,82 @@
+Problem Description: """
+Using a web scrapping and automation library of Python, fetch the closing pricies of all stocks of the indian stock market for the past 20 years for each day the market was open.
+Organize data into a table. This is simple, first column will include the stock name/stock symbol. The rest of the columns are the dates, for example, the first column will be the last date of the last FY, then the second last, then third last, so on for last 20 years. The values of these columns are the closing prices for the day of the corresponsind stock.
+Then, perform mathematical formulation on the table, using Gann Cycles and CHM. The flow is simple. User inputs a start date and end date. The program will calculate the above methods for all stocks and fetch the list of top performing stocks in that time period/cycle.
+All of the above features will be implemented using various functions. All being called and used in a separate "main" function.
+Another separate function will fetch the list of poor performers in that time period.
+Future Optimizations:
+A function to update the data for the newer financial year will exist. This will simply check whether the data already exists or not. Of not, it will create the entire table including data till present date. if it exists, it simply fetches and updates the data from the last date in the data to current date. Normally, i would like to include data for complete financial years and not for financial years half way.
+A function will take a stock symbol, start date and ending date for a time period, calculate cycles and other relevant methods as mentioned above. Then it tell whether that stock will perform good in that time period or not by simply showing a set of numbers These number can be %change, and other statistical methods.
+"""
+My Requirements: """
+1. Using a web scrapping library, visit the Yahoo Finance website for historical data
+2. I have already defined a list of BSE stocks. This contains all stocks listed on BSE
+3. The program iterates over it, adds the suffix of ".BO" to each stock's name since that is how Yahoo Finance stores and reads BSE stocks.
+4. The start date is 2003-04-01 and the end date it 2024-03-31
+5. In this define time period, for every stock in the list, get the daily closing prices for all dates the market was open.
+6. Create a combined CSV file with the following structure: 
+    - First columns is Date Columns. The values are in ascending order.
+    - The second column, third column and so on are names of stocks
+    - The values in the columns which has stock names as headers, are the closing prices of that stock on the corresponding date of the row.
+    - If the stock price for that particular date is not available, simply put 0.
+    - Before saving the dataframe as the CSV file, remove the .BO suffix from column names. Or you can write the program in such a way that the suffix is added only when sending arguments for requesting data.
+7. When the function to do the above task is called, it first checks if a CSV file with a names "all_bse_stock_20_yrs_data.csv" exists or not. If it does exist, create a pandas dataframe of that file and assign it to a global variable. Then set the global variable all_data_exist = True. So that whenever we run the funciton, we check if the file is already there or not, to avoid doing the same task again and again.
+"""
+My Code so Far: """
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import pandas as pd
+import time
+
+# Initialize the WebDriver
+driver = webdriver.Chrome(ChromeDriverManager().install())
+
+# Define the list of stock symbols
+stock_symbols = ['RELIANCE.BO', 'TCS.BO', 'INFY.BO']  # Add your list of stock symbols here
+
+# Define the date range
+start_date = '2003-04-01'
+end_date = '2024-03-31'
+
+# Initialize an empty DataFrame to store the data
+data = pd.DataFrame()
+
+# Function to convert date to Unix timestamp
+def date_to_unix(date_str):
+    return int(time.mktime(time.strptime(date_str, '%Y-%m-%d')))
+
+# Fetch data for each stock
+for symbol in stock_symbols:
+    url = f"https://finance.yahoo.com/quote/{symbol}/history?period1={date_to_unix(start_date)}&period2={date_to_unix(end_date)}&interval=1d&filter=history&frequency=1d"
+    driver.get(url)
+    time.sleep(5)  # Wait for the page to load
+
+    # Extract the data
+    rows = driver.find_elements(By.XPATH, '//table[contains(@class, "W(100%)")]/tbody/tr')
+    stock_data = []
+    for row in rows:
+        cols = row.find_elements(By.TAG_NAME, 'td')
+        if len(cols) > 0:
+            date = cols[0].text
+            close_price = cols[4].text
+            stock_data.append([date, close_price])
+
+    # Convert to DataFrame
+    df = pd.DataFrame(stock_data, columns=['Date', symbol])
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+    data = pd.concat([data, df], axis=1)
+
+# Save the data to a CSV file
+data.to_csv('historical_stock_data.csv')
+
+# Close the WebDriver
+driver.quit()
+"""
+
+Check the code for any problems and optmize it. Based on the above described requirements and problem descrption, generate the code which is well distributed in functions and global variables with many error checks. At last, answer my question: """
+I also have a NSE stocks list. For which i will again run this function, add the .NS suffix and create a separate CSV file. Then for a combined file, i will merge the NSE and BSE files, while making sure that each stock is used only once, removing duplicates, which is a potential problem since many stocks are listed on both exchanges. How can i optimize the code to reduce redundancy?
+"""
